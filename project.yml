@@ -1,6 +1,6 @@
 name: TalkPlanner
 options:
-  bundleIdPrefix: com.lucabianchi
+  bundleIdPrefix: ai.radixia.app
   createIntermediateGroups: true
   deploymentTarget:
     iOS: "17.0"
@@ -34,10 +34,10 @@ targets:
       path: TalkPlanner/TalkPlanner.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.com.lucabianchi.TalkPlanner
+          - group.ai.radixia.app.talk-planner
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lucabianchi.TalkPlanner
+        PRODUCT_BUNDLE_IDENTIFIER: ai.radixia.app.talk-planner
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
     dependencies:
@@ -62,10 +62,10 @@ targets:
       path: TalkPlannerWidgets/TalkPlannerWidgets.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.com.lucabianchi.TalkPlanner
+          - group.ai.radixia.app.talk-planner
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lucabianchi.TalkPlanner.Widgets
+        PRODUCT_BUNDLE_IDENTIFIER: ai.radixia.app.talk-planner.Widgets
         TARGETED_DEVICE_FAMILY: "1"
         SKIP_INSTALL: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: ""
@@ -81,9 +81,9 @@ targets:
       properties:
         CFBundleDisplayName: Talk Planner
         WKApplication: true
-        WKCompanionAppBundleIdentifier: com.lucabianchi.TalkPlanner
+        WKCompanionAppBundleIdentifier: ai.radixia.app.talk-planner
         ITSAppUsesNonExemptEncryption: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lucabianchi.TalkPlanner.watchkitapp
+        PRODUCT_BUNDLE_IDENTIFIER: ai.radixia.app.talk-planner.watchkitapp
         TARGETED_DEVICE_FAMILY: "4"

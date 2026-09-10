@@ -60,12 +60,12 @@ Select the `TalkPlanner` scheme to run the iPhone app (the watch app is embedded
 `TalkPlannerWatch` scheme to run the watch app directly on a paired watch simulator.
 
 Before running on devices, set your team in Signing & Capabilities (or set `DEVELOPMENT_TEAM`
-in `project.yml`) and change the bundle identifier prefix (`com.lucabianchi`) if needed.
+in `project.yml`) and change the bundle identifier prefix (`ai.radixia.app`) if needed.
 
 ## Widget
 
 The running screen writes a `WidgetSessionState` JSON file into the App Group
-`group.com.lucabianchi.TalkPlanner` whenever the talk starts, advances or ends, then calls
+`group.ai.radixia.app.talk-planner` whenever the talk starts, advances or ends, then calls
 `WidgetCenter.reloadAllTimelines()`. The widget renders it with `ProgressView(timerInterval:)`
 and `Text(_, style: .timer)`, which animate on their own, so the timeline only contains the
 instants where colours change (last 30 s, overtime). Both the app and the extension need the
@@ -80,7 +80,7 @@ list directly. The watch never writes back, so the phone is the single source of
 
 ## Data note
 
-The App Group identifier is `group.com.lucabianchi.TalkPlanner`. It changed from the earlier
+The App Group identifier is `group.ai.radixia.app.talk-planner`. It changed from the earlier
 `group.com.lucabianchi.ConfTimer`, so any local talk data from a prior install is not migrated
 and is reset on upgrade.
 

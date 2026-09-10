@@ -64,7 +64,7 @@ extension WidgetSessionState {
 
 /// Hands the running session to the widget through the shared App Group container.
 enum WidgetSessionStore {
-    static let appGroupIdentifier = "group.com.lucabianchi.TalkPlanner"
+    static let appGroupIdentifier = "group.ai.radixia.app.talk-planner"
 
     static var fileURL: URL? {
         FileManager.default

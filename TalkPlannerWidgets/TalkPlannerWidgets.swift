@@ -10,7 +10,7 @@ struct TalkPlannerWidgetBundle: WidgetBundle {
 
 struct TalkProgressWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "com.lucabianchi.TalkPlanner.talk-progress", provider: TalkTimelineProvider()) { entry in
+        StaticConfiguration(kind: "ai.radixia.app.talk-planner.talk-progress", provider: TalkTimelineProvider()) { entry in
             TalkProgressWidgetView(entry: entry)
                 .containerBackground(for: .widget) {
                     Color("WidgetBackground")
