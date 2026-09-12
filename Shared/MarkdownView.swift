@@ -10,6 +10,9 @@ struct MarkdownBlock: Identifiable, Equatable {
         case quote
         case code
         case rule
+        /// An explicit segment marker (`@[Title]`) the speaker inserts to split the
+        /// script into sections that line up with the agenda items.
+        case segmentMarker
     }
 
     let id: Int
@@ -20,11 +23,34 @@ struct MarkdownBlock: Identifiable, Equatable {
         if case .heading = kind { return true }
         return false
     }
+
+    var isSegmentMarker: Bool {
+        kind == .segmentMarker
+    }
 }
 
 /// Small block-level Markdown parser. Inline styling (bold, italic, code, links)
 /// is left to `AttributedString(markdown:)` when each block is rendered.
+///
+/// In addition to standard Markdown it recognises a segment marker on its own
+/// line: `@[Segment Title]`. Speakers drop these into the script to split it into
+/// sections that line up with the agenda, keeping the notes and teleprompter in
+/// sync with the item they are currently on.
 enum MarkdownParser {
+    /// The syntax used to mark the start of a segment inside the notes.
+    /// A line like `@[Intro]` starts the section for the "Intro" agenda item.
+    static func segmentMarker(for title: String) -> String {
+        "@[\(title.trimmingCharacters(in: .whitespaces))]"
+    }
+
+    /// Parses a segment marker (`@[Title]`) from a trimmed line, if present.
+    private static func segmentMarkerText(in line: String) -> String? {
+        guard line.hasPrefix("@[") , line.hasSuffix("]") else { return nil }
+        let inner = line.dropFirst(2).dropLast()
+        let title = inner.trimmingCharacters(in: .whitespaces)
+        return title.isEmpty ? nil : title
+    }
+
     static func parse(_ markdown: String) -> [MarkdownBlock] {
         var blocks: [MarkdownBlock] = []
         var paragraph: [String] = []
@@ -61,6 +87,11 @@ enum MarkdownParser {
             if line == "---" || line == "***" || line == "___" {
                 flushParagraph()
                 blocks.append(MarkdownBlock(id: blocks.count, kind: .rule, text: ""))
+                continue
+            }
+            if let title = segmentMarkerText(in: line) {
+                flushParagraph()
+                blocks.append(MarkdownBlock(id: blocks.count, kind: .segmentMarker, text: title))
                 continue
             }
             if let (level, text) = heading(in: line) {
@@ -185,6 +216,19 @@ struct MarkdownView: View {
                 .background(Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
         case .rule:
             Divider()
+        case .segmentMarker:
+            HStack(spacing: 6) {
+                Image(systemName: "flag.fill")
+                    .font(.caption2)
+                Text(block.text)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(Color.accentColor)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.accentColor.opacity(0.12), in: Capsule())
+            .padding(.top, 6)
         }
     }
 
@@ -203,11 +247,29 @@ struct MarkdownView: View {
 }
 
 extension Array where Element == MarkdownBlock {
-    /// First heading whose text contains the given title (case-insensitive), used to
-    /// jump the notes to the agenda item being presented.
-    func headingID(matching title: String) -> Int? {
+    /// The block to scroll to for the given agenda item. An explicit segment marker
+    /// (`@[Title]`) wins; otherwise we fall back to the first heading whose text
+    /// contains the title (case-insensitive). Used to jump the notes / teleprompter
+    /// to the item being presented.
+    func anchorID(matching title: String) -> Int? {
         let needle = title.trimmingCharacters(in: .whitespaces).lowercased()
         guard !needle.isEmpty else { return nil }
+        if let marker = first(where: { $0.isSegmentMarker && $0.text.lowercased() == needle })?.id {
+            return marker
+        }
+        if let marker = first(where: { $0.isSegmentMarker && $0.text.lowercased().contains(needle) })?.id {
+            return marker
+        }
         return first { $0.isHeading && $0.text.lowercased().contains(needle) }?.id
+    }
+
+    /// Kept for source compatibility; segment markers now take priority over headings.
+    func headingID(matching title: String) -> Int? {
+        anchorID(matching: title)
+    }
+
+    /// True when the speaker has placed any explicit `@[...]` segment markers.
+    var hasSegmentMarkers: Bool {
+        contains { $0.isSegmentMarker }
     }
 }

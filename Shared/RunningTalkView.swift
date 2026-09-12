@@ -9,6 +9,7 @@ struct RunningTalkView: View {
     @State private var session: TalkSession
     @State private var confirmingEnd = false
     @State private var showingNotes = true
+    @State private var showingTeleprompter = false
     private let notesBlocks: [MarkdownBlock]
     @Environment(\.dismiss) private var dismiss
     @Environment(\.isLuminanceReduced) private var isLuminanceReduced
@@ -77,11 +78,19 @@ struct RunningTalkView: View {
         .toolbar {
             if !notesBlocks.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) {
+                    Button("Teleprompter", systemImage: "text.viewfinder") {
+                        showingTeleprompter = true
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(showingNotes ? "Hide Notes" : "Show Notes", systemImage: showingNotes ? "doc.text.fill" : "doc.text") {
                         withAnimation { showingNotes.toggle() }
                     }
                 }
             }
+        }
+        .fullScreenCover(isPresented: $showingTeleprompter) {
+            TeleprompterView(blocks: notesBlocks, session: session)
         }
         #endif
         .confirmationDialog("End this talk early?", isPresented: $confirmingEnd, titleVisibility: .visible) {
@@ -110,7 +119,8 @@ struct RunningTalkView: View {
     }
 
     #if os(iOS)
-    /// Speaker notes under the gauges. Jumps to the heading that matches the current item.
+    /// Speaker notes under the gauges. Jumps to the segment marker (`@[Title]`) or,
+    /// failing that, the heading that matches the current item.
     private var notesPanel: some View {
         ScrollViewReader { proxy in
             ScrollView {
