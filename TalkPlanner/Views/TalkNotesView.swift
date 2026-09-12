@@ -18,6 +18,7 @@ struct TalkNotesView: View {
     @State private var importing = false
     @State private var importError: String?
     @State private var confirmClear = false
+    @State private var showingTeleprompter = false
     @FocusState private var editorFocused: Bool
 
     private var talk: Talk? { store.talk(id: talkID) }
@@ -41,7 +42,7 @@ struct TalkNotesView: View {
                     .padding(.horizontal, 12)
                     .overlay(alignment: .topLeading) {
                         if draft.isEmpty {
-                            Text("Paste your talk or notes here in Markdown.\n\nTip: use a heading that matches each agenda item (for example `## Intro`) and the notes will jump to it while you present.")
+                            Text("Paste your talk or notes here in Markdown.\n\nTip: split the script with a segment marker like `@[Intro]` on its own line. While you present, the notes and teleprompter jump to that marker when you reach the matching agenda item.")
                                 .font(.callout)
                                 .foregroundStyle(.tertiary)
                                 .padding(.horizontal, 17)
@@ -65,7 +66,13 @@ struct TalkNotesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                if !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Button("Teleprompter", systemImage: "text.viewfinder") { showingTeleprompter = true }
+                }
                 Menu {
+                    if let talk, !talk.segments.isEmpty {
+                        Button("Insert Segment Markers", systemImage: "flag") { insertSegmentMarkers(for: talk) }
+                    }
                     Button("Import Markdown File", systemImage: "square.and.arrow.down") { importing = true }
                     if !draft.isEmpty {
                         Button("Clear Notes", systemImage: "trash", role: .destructive) { confirmClear = true }
@@ -88,6 +95,9 @@ struct TalkNotesView: View {
         }
         .confirmationDialog("Clear all notes?", isPresented: $confirmClear, titleVisibility: .visible) {
             Button("Clear Notes", role: .destructive) { draft = "" }
+        }
+        .fullScreenCover(isPresented: $showingTeleprompter) {
+            TeleprompterView(markdown: draft)
         }
         .onAppear {
             guard !loaded, let talk else { return }
@@ -133,5 +143,24 @@ struct TalkNotesView: View {
         guard var talk, talk.notes != notes else { return }
         talk.notes = notes
         store.update(talk)
+    }
+
+    /// Adds a `@[Title]` marker for any agenda item that doesn't already have one,
+    /// so the speaker can move the generated markers to the right spot in the script.
+    private func insertSegmentMarkers(for talk: Talk) {
+        let existing = MarkdownParser.parse(draft)
+        let present = Set(existing.filter(\.isSegmentMarker).map { $0.text.lowercased() })
+        let missing = talk.segments
+            .map { $0.title.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !present.contains($0.lowercased()) }
+        guard !missing.isEmpty else { return }
+
+        let markers = missing.map { MarkdownParser.segmentMarker(for: $0) }.joined(separator: "\n\n")
+        if draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            draft = markers + "\n"
+        } else {
+            let separator = draft.hasSuffix("\n") ? "\n" : "\n\n"
+            draft += separator + markers + "\n"
+        }
     }
 }
